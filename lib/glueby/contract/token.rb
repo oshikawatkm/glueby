@@ -128,12 +128,11 @@ module Glueby
         raise Glueby::Contract::Errors::InvalidAmount unless amount.positive?
         raise Glueby::Contract::Errors::InvalidTokenType unless token_type == Tapyrus::Color::TokenTypes::REISSUABLE
 
-        if script_pubkey
-          funding_tx = create_funding_tx(wallet: issuer, script: @script_pubkey)
-          funding_tx = issuer.internal_wallet.broadcast(funding_tx)
+        if validate_script_pubkey(wallet: issuer)
+          estimated_fee = FixedFeeEstimator.new.fee(Tapyrus::Tx.new)
+          funding_tx = create_funding_tx(wallet: issuer, amount: estimated_fee, script: @script_pubkey)
           tx = create_reissue_tx(funding_tx: funding_tx, issuer: issuer, amount: amount, color_id: color_id)
-          tx = issuer.internal_wallet.broadcast(tx)
-
+          [funding_tx, tx].each { |tx| issuer.internal_wallet.broadcast(tx) }
           [color_id, tx]
         else
           raise Glueby::Contract::Errors::UnknownScriptPubkey
@@ -201,6 +200,22 @@ module Glueby
         payload << @color_id.to_payload
         payload << @script_pubkey.to_payload if script_pubkey
         payload
+      end
+
+      # Verify that wallet is the issuer of the reissuable token
+      #　reutrn [Boolean]
+      def validate_script_pubkey(wallet:)
+        addresses = wallet.internal_wallet.get_addresses
+        addresses.each do |address|
+          decoded_address_response = Tapyrus.decode_base58_address(address)
+          pubkey_hash = decoded_address_response[0]
+          parsed_script_pubkey = Tapyrus::Script.parse_from_payload(script_pubkey.to_hex)
+          scripts = parsed_script_pubkey.to_s.split(" ")
+          if pubkey_hash == scripts[2]
+            return true
+          end
+        end
+        false
       end
 
       # Restore token from payload
