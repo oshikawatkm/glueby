@@ -129,10 +129,11 @@ module Glueby
         raise Glueby::Contract::Errors::InvalidTokenType unless token_type == Tapyrus::Color::TokenTypes::REISSUABLE
 
         if validate_reissuer(wallet: issuer)
-          estimated_fee = FixedFeeEstimator.new.fee(Tapyrus::Tx.new)
-          funding_tx = create_funding_tx(wallet: issuer, amount: estimated_fee, script: @script_pubkey)
+          funding_tx = create_funding_tx(wallet: issuer, script: @script_pubkey)
+          funding_tx = issuer.internal_wallet.broadcast(funding_tx)
           tx = create_reissue_tx(funding_tx: funding_tx, issuer: issuer, amount: amount, color_id: color_id)
-          [funding_tx, tx].each { |tx| issuer.internal_wallet.broadcast(tx) }
+          tx = issuer.internal_wallet.broadcast(tx)
+
           [color_id, tx]
         else
           raise Glueby::Contract::Errors::UnknownScriptPubkey
