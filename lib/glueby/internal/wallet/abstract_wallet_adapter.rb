@@ -133,7 +133,7 @@ module Glueby
 
         # Returns an array of addresses
         #
-        # [TASK] 
+        # This method is expected to return the list of addresses that wallet has.
         #
         # @param [String] wallet_id - The wallet id that is offered by `create_wallet()` method.
         # @return [Array<String>] array of P2PKH address

@@ -202,22 +202,6 @@ module Glueby
         payload
       end
 
-      # Verify that wallet is the issuer of the reissuable token
-      #　reutrn [Boolean]
-      def validate_script_pubkey(wallet:)
-        addresses = wallet.internal_wallet.get_addresses
-        addresses.each do |address|
-          decoded_address_response = Tapyrus.decode_base58_address(address)
-          pubkey_hash = decoded_address_response[0]
-          parsed_script_pubkey = Tapyrus::Script.parse_from_payload(script_pubkey.to_hex)
-          scripts = parsed_script_pubkey.to_s.split(" ")
-          if pubkey_hash == scripts[2]
-            return true
-          end
-        end
-        false
-      end
-
       # Restore token from payload
       # @param payload [String]
       # @return [Glueby::Contract::Token]
@@ -236,6 +220,23 @@ module Glueby
       # @param color_id [String]
       def initialize(color_id:)
         @color_id = color_id
+      end
+
+      private
+
+      # Verify that wallet is the issuer of the reissuable token
+      #　reutrn [Boolean]
+      def validate_script_pubkey(wallet:)
+        addresses = wallet.internal_wallet.get_addresses
+        addresses.each do |address|
+          decoded_address_response = Tapyrus.decode_base58_address(address)
+          pubkey_hash = decoded_address_response[0]
+          scripts = @script_pubkey.to_s.split(" ")
+          if pubkey_hash == scripts[2]
+            return true
+          end
+        end
+        false
       end
     end
   end
