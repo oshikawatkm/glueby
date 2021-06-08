@@ -128,7 +128,7 @@ module Glueby
         raise Glueby::Contract::Errors::InvalidAmount unless amount.positive?
         raise Glueby::Contract::Errors::InvalidTokenType unless token_type == Tapyrus::Color::TokenTypes::REISSUABLE
 
-        if validate_script_pubkey(wallet: issuer)
+        if validate_reissuer(wallet: issuer)
           estimated_fee = FixedFeeEstimator.new.fee(Tapyrus::Tx.new)
           funding_tx = create_funding_tx(wallet: issuer, amount: estimated_fee, script: @script_pubkey)
           tx = create_reissue_tx(funding_tx: funding_tx, issuer: issuer, amount: amount, color_id: color_id)
@@ -226,7 +226,7 @@ module Glueby
 
       # Verify that wallet is the issuer of the reissuable token
       #　reutrn [Boolean]
-      def validate_script_pubkey(wallet:)
+      def validate_reissuer(wallet:)
         addresses = wallet.internal_wallet.get_addresses
         addresses.each do |address|
           decoded_address_response = Tapyrus.decode_base58_address(address)
