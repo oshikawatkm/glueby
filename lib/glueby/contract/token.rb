@@ -230,10 +230,10 @@ module Glueby
       def validate_reissuer(wallet:)
         addresses = wallet.internal_wallet.get_addresses
         addresses.each do |address|
-          decoded_address_response = Tapyrus.decode_base58_address(address)
-          pubkey_hash = decoded_address_response[0]
-          scripts = @script_pubkey.to_s.split(" ")
-          if pubkey_hash == scripts[2]
+          decoded_address = Tapyrus.decode_base58_address(address)
+          pubkey_hash_from_address = decoded_address[0]
+          pubkey_hash_from_script = Tapyrus::Script.parse_from_payload(script_pubkey.chunks[2])
+          if pubkey_hash_from_address == pubkey_hash_from_script.to_s
             return true
           end
         end
